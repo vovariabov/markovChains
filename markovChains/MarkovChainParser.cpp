@@ -14,7 +14,7 @@ class chain {
 		vector < vector <double> >	Matrix;
 		int							size;
 		chain::chain(int = 0);
-		void chain::print(ostream& = cout, int = 10);
+		void chain::print(ostream& = cout, int = 3);
 		chain chain::operator* (const chain&) const;
 		chain chain::pov(int);
 		vector<double> chain::apply(vector<double>);
@@ -49,10 +49,10 @@ chain fetch(string path) {
 	while (fcin) {
 		char* temp = new char[256];
 		fcin.getline(temp, 256);
-		strings.push_back(temp);
+		if (int(temp[1]) != -51) strings.push_back(temp);		
 	}
 	fcin.close();
-	int len = strings.size() - 1;
+	int len = strings.size();
 	double probab;
 	int index, offset;
 	chain chain(len);
@@ -184,7 +184,6 @@ vector <int> reachableset(chain MC, int start)
 			result.push_back(i);
 	}
 	return result;
-
 }
 
 void printset(vector<int> v, ostream& c, string left = "", string right = "")
@@ -197,10 +196,81 @@ void printset(vector<int> v, ostream& c, string left = "", string right = "")
 	}
 	cout << right;
 }
+
 bool essential(chain MC, int start)
+//проверяте существенность состояния start
 {
 	return reachable(MC, start, start, true);
 }
+
+bool interconnected(chain MC, int s1, int s2)
+// проверяет сообщаются ли состояния s1 и s2
+{
+	int size = MC.size;
+	chain M(size);
+
+	for (int i = 0; i < size; i++)
+	{
+		for (int j = 0; j < size; j++)
+		{
+			M.Matrix[i][j] = double(MC.Matrix[i][j] > 0 || i == j);
+		}
+	}
+	M = M.pov(size);
+	return (M.Matrix[s1][s2] > 0 && M.Matrix[s2][s1] > 0);
+}
+
+vector <vector <int> > interconnectedclasses(chain MC)
+//возвращает классы сообщаемости цепи MC
+{
+	int size = MC.size;
+	chain M(size);
+
+	for (int i = 0; i < size; i++)
+	{
+		for (int j = 0; j < size; j++)
+		{
+			M.Matrix[i][j] = double(MC.Matrix[i][j] > 0 || i == j);
+		}
+	}
+	M = M.pov(size);
+	vector <bool> marked(size, false);
+	vector <vector <int> > results;
+	int j = 0;
+	bool done = false;
+	while (!done)
+	{
+		vector <int> intclass;
+		for (int i = 0; i < size; i++)
+		{
+			if ((M.Matrix[i][j] > 0) && (M.Matrix[j][i] > 0)) {
+				intclass.push_back(i);
+				marked[i] = true;
+			}
+		}
+		results.push_back(intclass);
+		done = true;
+		for (int i = 0; i < size; i++)
+		{
+			if (!marked[i]) {
+				j = i;
+				done = false;
+				break;
+			}
+		}
+	}
+	return results;
+}
+
+void printinterconnectedclasses(chain MC, ostream& c) {
+	vector <vector <int> > results = interconnectedclasses(MC);
+	int number = results.size();
+	for (int i = 0; i < number; i++)
+	{
+		printset(results[i], c, "CLASS : ", "\n");
+	}
+}
+
 int main() 
 {
 	chain MC = fetch("data.txt");
@@ -208,7 +278,6 @@ int main()
 	cout << endl;
 	vector <double> v;
 	int start, finish;
-	cin >> start;
-	cout << essential(MC, start-1)<< " BUT "<<reachable(MC, start-1, start-1);
+	printinterconnectedclasses(MC, cout);
 	system("pause");
 }

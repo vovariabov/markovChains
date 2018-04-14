@@ -17,19 +17,13 @@ class chain {
 		void chain::print(ostream& = cout, int = 10);
 		chain chain::operator* (const chain&) const;
 		chain chain::pov(int);
+		vector<double> chain::apply(vector<double>);
 };
 chain::chain(int N)
 {
 	size = N;
-	vector <double> temp;
-	for (int j = 0; j < N; j++)
-	{
-		temp.push_back(0);
-	}
-	for (int j = 0; j < N; j++)
-	{
-		Matrix.push_back(temp);
-	}
+	vector <vector <double> > result(N, vector<double>(N, 0));
+	Matrix = result;
 }
 
 void chain::print(ostream& c, int precision)
@@ -111,17 +105,110 @@ chain chain::pov(int pov)
 	return result;
 }
 
-double probability(chain MC, int start, int finish, int steps)
+vector<double> chain::apply(vector<double> v)
 {
-	return (MC.pov(steps)).Matrix[start][finish];
+	vector <double> result;
+	if (v.size() != size) return result;
+	for (int i = 0; i < size; i++)
+	{
+		double temp = 0;
+		for (int j = 0; j < size; j++)
+		{
+			temp += Matrix[j][i] * v[j];
+		}
+		result.push_back(temp);
+	}
+	return result;
 }
-int main()
+double prob(chain MC, int start, int finish, int step) 
+//вероятность попасть из позиции start в позицию finist на шаге step
+{
+	return (MC.pov(step)).Matrix[start][finish];
+}
+
+vector <double> probvector(chain MC, vector <double> v, int step) 
+//по вектору распредиления вероятностей v в начальном положении получает вектор распредиления вероятностей на шаге step;
+{
+	return (MC.pov(step)).apply(v);
+}
+
+double expectedvalue(chain MC, vector <double> v, int step)
+//матожидание положения на шаге step о вектору распредиления вероятностей v в начальном положении;
+{
+	double result = 0;
+	vector <double> probvec = probvector(MC, v, step);
+	for (int i = 0; i < probvec.size(); i++)
+	{
+		result += (i + 1)*probvec[i];
+	}
+	return result;
+}
+
+bool reachable(chain MC, int start, int finish, bool essential = false)
+//проверяет достижимость finish из start
+{
+	int size = MC.size;
+	chain M(size);
+
+	for (int i = 0; i < size; i++)
+	{
+		for (int j = 0; j < size; j++)
+		{
+			M.Matrix[i][j] = double(MC.Matrix[i][j] > 0 || (i == j && !essential));
+		}
+	}
+	return (prob(M, start, finish, size) > 0);
+}
+
+vector <int> reachableset(chain MC, int start)
+//возвращает достижимое множестов положения start
+{
+	int size = MC.size;
+	chain M(size);
+
+	for (int i = 0; i < size; i++)
+	{
+		for (int j = 0; j < size; j++)
+		{
+			M.Matrix[i][j] = double(MC.Matrix[i][j] > 0 || i == j);
+		}
+	}
+	M.print();
+	vector <double> v(size, 0);
+	vector <int> result(0);
+	v[start] = 1;
+	v = M.apply(v);
+	for (int i = 0; i < size; i++)
+	{
+		if (v[i] > 0)
+			result.push_back(i);
+	}
+	return result;
+
+}
+
+void printset(vector<int> v, ostream& c, string left = "", string right = "")
+{
+	cout << left << " ";
+	int size = v.size();
+	for (int i = 0; i < size; i++)
+	{
+		c << v[i] + 1 << ' ';
+	}
+	cout << right;
+}
+bool essential(chain MC, int start)
+{
+	return reachable(MC, start, start, true);
+}
+int main() 
 {
 	chain MC = fetch("data.txt");
 	MC.print();
 	cout << endl;
-	int start, finish, steps;
-	cin >> start >> finish >> steps;
-	cout << probability(MC, start-1, finish-1, steps) << endl;
+	vector <double> v;
+	int start, finish;
+	cin >> start;
+	cout << essential(MC, start-1)<< " BUT "<<reachable(MC, start-1, start-1);
 	system("pause");
 }

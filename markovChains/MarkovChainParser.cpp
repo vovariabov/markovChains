@@ -9,13 +9,14 @@
 
 using namespace std;
 
-
 class chain {
 	public:
 		vector < vector <double> >	Matrix;
 		int							size;
-		chain::chain(int);
-		void chain::print(ostream&, int);
+		chain::chain(int = 0);
+		void chain::print(ostream& = cout, int = 10);
+		chain chain::operator* (const chain&) const;
+		chain chain::pov(int);
 };
 chain::chain(int N)
 {
@@ -74,9 +75,53 @@ chain fetch(string path) {
 	return chain;
 }
 
+chain chain::operator* (const chain& c) const {
+	if (size != c.size) return chain();
+	chain result(size);
+	for (int i = 0; i < size; i++)
+	{
+		for (int j = 0; j < size; j++)
+		{
+			for (int k = 0; k < size; k++)
+			{
+				result.Matrix[i][j] += Matrix[i][k] * c.Matrix[k][j];
+			}
+		}
+	}
+	return result;
+}
+
+chain chain::pov(int pov)
+{
+	chain result(size);
+	result.Matrix = this->Matrix;
+	chain multiplicant(size);
+	multiplicant.Matrix = this->Matrix;
+	while (pov > 0) {
+		if (pov % 2 == 0)
+		{
+			multiplicant = multiplicant*multiplicant;
+			pov /= 2;
+		}
+		else {
+			result = result*multiplicant;
+			pov--;
+		}
+	}
+	return result;
+}
+
+double probability(chain MC, int start, int finish, int steps)
+{
+	return (MC.pov(steps)).Matrix[start][finish];
+}
 int main()
 {
 	chain MC = fetch("data.txt");
-	MC.print(cout, 2);
+	MC.print();
+	cout << endl;
+	int start, finish, steps;
+	cin >> start >> finish >> steps;
+	cout << probability(MC, start-1, finish-1, steps) << endl;
 	system("pause");
 }

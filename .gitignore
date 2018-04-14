@@ -1,7 +1,9 @@
+
 # Prerequisites
 *.d
 *.db
 *.opendb
+*.pdb
 
 # Compiled Object files
 *.slo
@@ -29,6 +31,7 @@
 *.lib
 
 # Executables
-*.exe
 *.out
 *.app
+
+/Debug/*

@@ -1,3 +1,4 @@
 ﻿  MarkovChainParser.cpp
+c:\users\владимир\source\repos\markovchains\markovchains\markovchainparser.cpp(65): warning C4101: 'c': unreferenced local variable
   markovChains.vcxproj -> C:\Users\Владимир\Source\Repos\markovChains\Debug\markovChains.exe
   markovChains.vcxproj -> C:\Users\Владимир\Source\Repos\markovChains\Debug\markovChains.pdb (Partial PDB)

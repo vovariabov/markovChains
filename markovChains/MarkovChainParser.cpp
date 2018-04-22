@@ -6,28 +6,31 @@
 #include <locale.h>
 #include <fstream>
 #include <vector>
+#include "MatrixMath.h"
 
 using namespace std;
 
+Package package;
+
 class chain {
 	public:
-		vector < vector <double> >	Matrix;
+		matrix	Matrix;
 		int							size;
 		chain::chain(int = 0);
 		void chain::print(ostream& = cout, int = 3);
 		chain chain::operator* (const chain&) const;
 		chain chain::pov(int);
-		vector<double> chain::apply(vector<double>);
+		row chain::apply(row);
+		int chain::rank(int = 0);
 };
 chain::chain(int N)
 {
 	size = N;
-	vector <vector <double> > result(N, vector<double>(N, 0));
+	matrix result(N, row(N, 0));
 	Matrix = result;
 }
 
-void chain::print(ostream& c, int precision)
-{
+void chain::print(ostream& c, int precision) {
 	c.precision(precision);
 	c << fixed;
 	for (int i = 0; i < size; i++)
@@ -42,6 +45,7 @@ void chain::print(ostream& c, int precision)
 }
 
 chain fetch(string path) {
+	//
 	setlocale(LC_NUMERIC, "French_Canada.1252");
 	ifstream fcin(path);
 	vector <char*> strings;
@@ -63,90 +67,61 @@ chain fetch(string path) {
 			strings[i] += offset;
 			sscanf(strings[i], "%lf%n", &probab, &offset);
 			strings[i] += offset;
-			chain.Matrix[i][index-1] = probab;
+			chain.Matrix[i][index] = probab;
 		}
 	}
 	return chain;
 }
 
 chain chain::operator* (const chain& c) const {
+	//оператор умножения матриц состояний двух цепей.
 	if (size != c.size) return chain();
 	chain result(size);
-	for (int i = 0; i < size; i++)
-	{
-		for (int j = 0; j < size; j++)
-		{
-			for (int k = 0; k < size; k++)
-			{
-				result.Matrix[i][j] += Matrix[i][k] * c.Matrix[k][j];
-			}
-		}
-	}
+	result.Matrix = package.Mult(Matrix, c.Matrix);
 	return result;
 }
 
-chain chain::pov(int pov)
-{
+chain chain::pov(int pov) {
+	//возводит матрицу переходов цепи в степерь pov.
 	chain result(size);
-	result.Matrix = this->Matrix;
-	chain multiplicant(size);
-	multiplicant.Matrix = this->Matrix;
-	while (pov > 0) {
-		if (pov % 2 == 0)
-		{
-			multiplicant = multiplicant*multiplicant;
-			pov /= 2;
-		}
-		else {
-			result = result*multiplicant;
-			pov--;
-		}
-	}
+	result.Matrix = package.Pov(Matrix, pov);
 	return result;
 }
 
-vector<double> chain::apply(vector<double> v)
-{
-	vector <double> result;
-	if (v.size() != size) return result;
-	for (int i = 0; i < size; i++)
-	{
-		double temp = 0;
-		for (int j = 0; j < size; j++)
-		{
-			temp += Matrix[j][i] * v[j];
-		}
-		result.push_back(temp);
-	}
-	return result;
+row chain::apply(row v) {
+	//умножает вектор v на матрицу переходов цепи.
+	if (v.size() != size) return row();
+	row result = package.Apply(Matrix, v);
+
 }
-double prob(chain MC, int start, int finish, int step) 
-//вероятность попасть из позиции start в позицию finist на шаге step
-{
+
+int chain::rank(int epsilon) {
+	return package.Rank(Matrix, epsilon);
+}
+double prob(chain MC, int start, int finish, int step) {
+	//вероятность попасть из позиции start в позицию finist на шаге step.
 	return (MC.pov(step)).Matrix[start][finish];
 }
 
-vector <double> probvector(chain MC, vector <double> v, int step) 
+row probvector(chain MC, row v, int step) 
 //по вектору распредиления вероятностей v в начальном положении получает вектор распредиления вероятностей на шаге step;
 {
 	return (MC.pov(step)).apply(v);
 }
 
-double expectedvalue(chain MC, vector <double> v, int step)
-//матожидание положения на шаге step о вектору распредиления вероятностей v в начальном положении;
-{
+double expectedvalue(chain MC, row v, int step) {
+	//матожидание положения на шаге step о вектору распредиления вероятностей v в начальном положении.
 	double result = 0;
-	vector <double> probvec = probvector(MC, v, step);
+	row probvec = probvector(MC, v, step);
 	for (int i = 0; i < probvec.size(); i++)
 	{
-		result += (i + 1)*probvec[i];
+		result += i * probvec[i];
 	}
 	return result;
 }
 
-bool reachable(chain MC, int start, int finish, bool essential = false)
-//проверяет достижимость finish из start
-{
+bool reachable(chain MC, int start, int finish, bool essential = false) {
+	//проверяет достижимость finish из start.
 	int size = MC.size;
 	chain M(size);
 
@@ -160,9 +135,8 @@ bool reachable(chain MC, int start, int finish, bool essential = false)
 	return (prob(M, start, finish, size) > 0);
 }
 
-vector <int> reachableset(chain MC, int start)
-//возвращает достижимое множестов положения start
-{
+vector <int> reachableset(chain MC, int start) {
+	//возвращает достижимое множестов положения start.
 	int size = MC.size;
 	chain M(size);
 
@@ -174,7 +148,7 @@ vector <int> reachableset(chain MC, int start)
 		}
 	}
 	M.print();
-	vector <double> v(size, 0);
+	row v(size, 0);
 	vector <int> result(0);
 	v[start] = 1;
 	v = M.apply(v);
@@ -186,13 +160,13 @@ vector <int> reachableset(chain MC, int start)
 	return result;
 }
 
-void printset(vector<int> v, ostream& c, string left = "", string right = "")
-{
+void printset(vector<int> v, ostream& c, string left = "", string right = "") {
+	//выводит вектор v в стрим c с левой и правым и правым идентификатором left и rightю.
 	cout << left << " ";
 	int size = v.size();
 	for (int i = 0; i < size; i++)
 	{
-		c << v[i] + 1 << ' ';
+		c << v[i] << ' ';
 	}
 	cout << right;
 }
@@ -203,9 +177,8 @@ bool essential(chain MC, int start)
 	return reachable(MC, start, start, true);
 }
 
-bool interconnected(chain MC, int s1, int s2)
-// проверяет сообщаются ли состояния s1 и s2
-{
+bool interconnected(chain MC, int s1, int s2) {
+	//проверяет сообщаются ли состояния s1 и s2.
 	int size = MC.size;
 	chain M(size);
 
@@ -220,9 +193,8 @@ bool interconnected(chain MC, int s1, int s2)
 	return (M.Matrix[s1][s2] > 0 && M.Matrix[s2][s1] > 0);
 }
 
-vector <vector <int> > interconnectedclasses(chain MC)
-//возвращает классы сообщаемости цепи MC
-{
+vector <vector <int> > interconnectedclasses(chain MC) {
+	//возвращает классы сообщаемости цепи MC.
 	int size = MC.size;
 	chain M(size);
 
@@ -263,6 +235,7 @@ vector <vector <int> > interconnectedclasses(chain MC)
 }
 
 void printinterconnectedclasses(chain MC, ostream& c) {
+	//выводит список сообщающихся классов цепи MC в поток c.
 	vector <vector <int> > results = interconnectedclasses(MC);
 	int number = results.size();
 	for (int i = 0; i < number; i++)
@@ -271,13 +244,41 @@ void printinterconnectedclasses(chain MC, ostream& c) {
 	}
 }
 
+
+//-------------------------------------temporary, algebrainc solution is required----------------------------------------------------------
+int decomposible(chain MC, ostream& c) {
+	//возвращает количество сообщающихся классов ЬС в поток c.
+	vector <vector <int> > results = interconnectedclasses(MC);
+	int number = results.size();
+	return number;
+}
+
+std::pair< vector <int>, vector <int> > essentialStates(chain MC) {
+	//возвращает вектор существенных (.first) и несущественных (.second) состояний цепи MC
+	std::pair< vector <int>, vector <int> > result;
+	for (int i = 0; i < MC.size; i++)
+	{
+		essential(MC, i) ? result.first.push_back(i) : result.second.push_back(i);
+	}
+	return result;
+}
+//-----------------------------------------------------------------------------------------------------------------------------------------
+
+//В4
+
+
 int main() 
 {
 	chain MC = fetch("data.txt");
 	MC.print();
+	
+	
 	cout << endl;
-	vector <double> v;
+	row v;
 	int start, finish;
-	printinterconnectedclasses(MC, cout);
+	
+	cout << MC.rank() << " " ;
+
 	system("pause");
+	return 0;
 }

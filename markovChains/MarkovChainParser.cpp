@@ -1,4 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS
+п»ї#define _CRT_SECURE_NO_WARNINGS
 
 #include <iostream>
 #include <cstdlib>
@@ -121,19 +121,19 @@ vector<double> chain::apply(vector<double> v)
 	return result;
 }
 double prob(chain MC, int start, int finish, int step) 
-//вероятность попасть из позиции start в позицию finist на шаге step
+//РІРµСЂРѕСЏС‚РЅРѕСЃС‚СЊ РїРѕРїР°СЃС‚СЊ РёР· РїРѕР·РёС†РёРё start РІ РїРѕР·РёС†РёСЋ finist РЅР° С€Р°РіРµ step
 {
 	return (MC.pov(step)).Matrix[start][finish];
 }
 
 vector <double> probvector(chain MC, vector <double> v, int step) 
-//по вектору распредиления вероятностей v в начальном положении получает вектор распредиления вероятностей на шаге step;
+//РїРѕ РІРµРєС‚РѕСЂСѓ СЂР°СЃРїСЂРµРґРёР»РµРЅРёСЏ РІРµСЂРѕСЏС‚РЅРѕСЃС‚РµР№ v РІ РЅР°С‡Р°Р»СЊРЅРѕРј РїРѕР»РѕР¶РµРЅРёРё РїРѕР»СѓС‡Р°РµС‚ РІРµРєС‚РѕСЂ СЂР°СЃРїСЂРµРґРёР»РµРЅРёСЏ РІРµСЂРѕСЏС‚РЅРѕСЃС‚РµР№ РЅР° С€Р°РіРµ step;
 {
 	return (MC.pov(step)).apply(v);
 }
 
 double expectedvalue(chain MC, vector <double> v, int step)
-//матожидание положения на шаге step о вектору распредиления вероятностей v в начальном положении;
+//РјР°С‚РѕР¶РёРґР°РЅРёРµ РїРѕР»РѕР¶РµРЅРёСЏ РЅР° С€Р°РіРµ step Рѕ РІРµРєС‚РѕСЂСѓ СЂР°СЃРїСЂРµРґРёР»РµРЅРёСЏ РІРµСЂРѕСЏС‚РЅРѕСЃС‚РµР№ v РІ РЅР°С‡Р°Р»СЊРЅРѕРј РїРѕР»РѕР¶РµРЅРёРё;
 {
 	double result = 0;
 	vector <double> probvec = probvector(MC, v, step);
@@ -145,7 +145,7 @@ double expectedvalue(chain MC, vector <double> v, int step)
 }
 
 bool reachable(chain MC, int start, int finish, bool essential = false)
-//проверяет достижимость finish из start
+//РїСЂРѕРІРµСЂСЏРµС‚ РґРѕСЃС‚РёР¶РёРјРѕСЃС‚СЊ finish РёР· start
 {
 	int size = MC.size;
 	chain M(size);
@@ -161,7 +161,7 @@ bool reachable(chain MC, int start, int finish, bool essential = false)
 }
 
 vector <int> reachableset(chain MC, int start)
-//возвращает достижимое множестов положения start
+//РІРѕР·РІСЂР°С‰Р°РµС‚ РґРѕСЃС‚РёР¶РёРјРѕРµ РјРЅРѕР¶РµСЃС‚РѕРІ РїРѕР»РѕР¶РµРЅРёСЏ start
 {
 	int size = MC.size;
 	chain M(size);
@@ -198,13 +198,13 @@ void printset(vector<int> v, ostream& c, string left = "", string right = "")
 }
 
 bool essential(chain MC, int start)
-//проверяте существенность состояния start
+//РїСЂРѕРІРµСЂСЏС‚Рµ СЃСѓС‰РµСЃС‚РІРµРЅРЅРѕСЃС‚СЊ СЃРѕСЃС‚РѕСЏРЅРёСЏ start
 {
 	return reachable(MC, start, start, true);
 }
 
 bool interconnected(chain MC, int s1, int s2)
-// проверяет сообщаются ли состояния s1 и s2
+// РїСЂРѕРІРµСЂСЏРµС‚ СЃРѕРѕР±С‰Р°СЋС‚СЃСЏ Р»Рё СЃРѕСЃС‚РѕСЏРЅРёСЏ s1 Рё s2
 {
 	int size = MC.size;
 	chain M(size);
@@ -221,7 +221,7 @@ bool interconnected(chain MC, int s1, int s2)
 }
 
 vector <vector <int> > interconnectedclasses(chain MC)
-//возвращает классы сообщаемости цепи MC
+//РІРѕР·РІСЂР°С‰Р°РµС‚ РєР»Р°СЃСЃС‹ СЃРѕРѕР±С‰Р°РµРјРѕСЃС‚Рё С†РµРїРё MC
 {
 	int size = MC.size;
 	chain M(size);

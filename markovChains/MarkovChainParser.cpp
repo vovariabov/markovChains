@@ -265,6 +265,29 @@ std::pair< vector <int>, vector <int> > essentialStates(chain MC) {
 //-----------------------------------------------------------------------------------------------------------------------------------------
 
 //В4
+bool returnState(chain MC, int x, int INFepsilon) {
+	//определяет возвратность состояния x цепи MC с точностью до epsilon
+	const int INF = 1000000;
+	row temp(MC.size, 0);
+	temp[x] = 1;
+	long long res = 0;
+	for (int i = 0; i < INF; i++) {
+		temp = MC.apply(temp);
+		res += temp[x];
+		if (x > INFepsilon) return true;
+	}
+	return false;
+}
+
+vector <int> allReturnStates(chain MC, int INFepsilon) {
+	//возвращает вектор всех возвратных состояний цепи MC
+	vector<int> states;
+	for (int i = 0; i < MC.size; i++)
+	{
+		if (returnState(MC, i, INFepsilon) ) states.push_back(i);
+	}
+	return states;
+}
 
 
 int main() 
